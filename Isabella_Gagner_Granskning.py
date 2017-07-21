@@ -112,7 +112,7 @@ class Board():
         if row > (self.row-2) or row<2 or col > (self.col-2) or col<2:
             return;
         #Om rutan redan syns: avbryt
-        if square.isHidden == False:
+        if square.isShown == True:
             return;
         #Om där finns en bomb: avbryt
         if square.value == True:
@@ -120,10 +120,10 @@ class Board():
         #Räkna antalet bomber runt rutan:
         n = square.neighbour
         #Om antalet grannar är större än noll: Visa rutan och avbryt
-        if n > 0:
+        if n >= 0:
             square.isHidden = False
-            return;
-        square.isHidden = False
+##            return;
+        square.isShown = True
         #Sen: fortsätt söka runt rutan
         for (drow,dcol) in [(0,1),(0,-1),(1,0),(-1,0),(1,1),(1,-1),(-1,1),(-1,-1)]:
             self.search(row+drow,col+dcol)
@@ -137,6 +137,7 @@ class Square():
         self.isFound = False
         self.isHidden = True
         self.neighbour = 0
+        self.isShown = False
 
     #Returnerar strängen av rutan man undersöker
     def __str__(self):
@@ -238,7 +239,6 @@ while run:
     if board.getObj(row2,col2).value == True: #om där finns en bomb
         board.getObj(row2,col2).value = False #placera om bomben, trist att dö på första försöket
         board.placeMines(1)
-##    board.getObj(row2,col2).isHidden = False #visa rutans värde
     board.search(row2,col2) #metoden som ej fungerar
     print(board.str()) #printa ut brädan igen
     running = True
@@ -247,9 +247,8 @@ while run:
         while True:
             print('Vill du flagga en ruta eller öppna en?')
             choice = input('Skriv "F" för att flagga en ruta, "Ö" för att öppna en:')
-            if choice.lower() is not 'F'.lower() or choice.lower() is not 'Ö'.lower():
+            if choice.lower() != 'F'.lower() or choice.lower() != 'Ö'.lower():
                 print('Oj, det måste blivit fel när du valde Öppna eller Flagga. Prova igen.')
-                break;
             else:
                 break;
         if choice == 'F':
