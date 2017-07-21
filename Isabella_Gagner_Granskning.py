@@ -15,6 +15,8 @@
 #för att kunna skapa en lista över de bästa användarna och printa ut deras tider
 
 import random
+import sys
+sys.setrecursionlimit(1500)
 
 #En klass som skapar ett bräde med värde null i varje ruta
 class Board():
@@ -105,28 +107,28 @@ class Board():
 
     #Öppnar rutor kring rutan man vill öppna (rekursion)
     def search(self,row,col):
-        #Räkna antalet bomber runt rutan:
-        n = self.getObj(row,col).neighbour
+        square = self.getObj(row,col)
         #Om rad och kolumn är utanför brädet: avbryt
-        if row > self.row and col > self.col:
-            return
+        if row > (self.row-2) or row<2 or col > (self.col-2) or col<2:
+            return;
         #Om rutan redan syns: avbryt
-        elif self.getObj(row,col).isHidden == False:
-            return
+        if square.isHidden == False:
+            return;
         #Om där finns en bomb: avbryt
-        elif self.getObj(row,col).value == True:
-            return
+        if square.value == True:
+            return;
+        #Räkna antalet bomber runt rutan:
+        n = square.neighbour
         #Om antalet grannar är större än noll: Visa rutan och avbryt
-        elif n > 0:
-            self.getObj(row,col).isHidden = False
-            return
-        #Annars: fortsätt söka runt rutan
+        if n > 0:
+            square.isHidden = False
+            return;
+        square.isHidden = False
+        #Sen: fortsätt söka runt rutan
         for (drow,dcol) in [(0,1),(0,-1),(1,0),(-1,0),(1,1),(1,-1),(-1,1),(-1,-1)]:
             self.search(row+drow,col+dcol)
+
            
-        
-        
-        
 class Square():
 
     def __init__(self):
@@ -204,37 +206,75 @@ run = True
 while run:
     row = int(input('Hur många rader och kolumner vill du ha din spelplan på?')) + 2
     col = row
-    
-    bräda = Board(row,col)
-    bräda.placeSquares()
-    bol = True
-    while bol == True:
-        minor = int(input('Hur många minor vill du ha på din spelplan?'))
-        if minor >= bräda.size():
+    board = Board(row,col)
+    board.placeSquares()
+    while True:
+        mines = int(input('Hur många minor vill du ha på din spelplan?'))
+        if mines >= board.size():
             print ('Hmm, du kan inte ha fler eller lika många minor som du har rutor. Prova igen!')
-            maxSize = bräda.size()-1
+            maxSize = board.size()-1
             print('Max är:',maxSize)
         else:
-            bol = False
-    bräda.placeMines(minor) #sätter ut alla minor
-    for i in range(1,row-1): #räknar grannarna på alla rutor (förutom en ram av nollor runt)
+            break;
+    board.placeMines(mines) #sätter ut alla minor
+    for i in range(1,row-1): #räknar grannarna på alla rutor
         for j in range(1,col-1):
-            bräda.getNeighbour(i,j)
+            board.getNeighbour(i,j)
      
-    bräda.showAll() #visar alla värden
+    board.showAll() #visar alla värden
+    print(board.str()) #printar ut alla visade värden      
+    board.hideAll() #gömmer värdena igen
+    print(board.str())
     
-    print(bräda.str()) #printar ut alla visade värden      
-    bräda.hideAll() #gömmer värdena igen
-    print(bräda.str())
-    rad = int(input('Vilken ruta vill du börja med att öppna? Ange rad:'))
-    kol = int(input('Ange kolumn:'))
-    if bräda.getObj(rad,kol).value == True: #om där finns en bomb
-        bräda.getObj(rad,kol).value = False #placera om bomben, trist att dö på första försöket
-        bräda.placeMines(1)
-    bräda.getObj(rad,kol).isHidden = False #visa rutans värde
-
-    bräda.search(rad,kol)
-    print (bräda.str())
+    while True:
+        row2 = int(input('Vilken ruta vill du börja med att öppna? Ange rad:'))
+        col2 = int(input('Ange kolumn:'))
+        if row2 > board.row:
+            print('Luring! Du kan inte välja en rad som inte finns. Prova igen.')
+        elif col2 > board.col:
+            print('Luring! Du kan inte välja en kolumn som inte finns. Prova igen')
+        else:
+            break;
+    if board.getObj(row2,col2).value == True: #om där finns en bomb
+        board.getObj(row2,col2).value = False #placera om bomben, trist att dö på första försöket
+        board.placeMines(1)
+##    board.getObj(row2,col2).isHidden = False #visa rutans värde
+    board.search(row2,col2) #metoden som ej fungerar
+    print(board.str()) #printa ut brädan igen
+    running = True
+    mines_found = 0
+    while mines_found != mines:
+        while True:
+            print('Vill du flagga en ruta eller öppna en?')
+            choice = input('Skriv "F" för att flagga en ruta, "Ö" för att öppna en:')
+            if choice.lower() is not 'F'.lower() or choice.lower() is not 'Ö'.lower():
+                print('Oj, det måste blivit fel när du valde Öppna eller Flagga. Prova igen.')
+                break;
+            else:
+                break;
+        if choice == 'F':
+            row3 = int(input('Vilken ruta vill du flagga? Ange rad:'))
+            col3 = int(input('Ange kolumn:'))
+            board.getObj(row3,col3).isFlagged = True
+            board.getObj(row3,col3).isHidden = False
+            if board.getObj(row3,col3).value == True:
+                mines_found +=1
+        if choice == 'Ö':
+            row4 = int(input('Vilken ruta vill du öppna? Ange rad:'))
+            col4 = int(input('Ange kolumn:'))
+            if board.getObj(row4,col4).value == True:
+                print ('GAME OVER')
+                print(board.str())
+                inputt = input('Vill du spela igen?')
+                if inputt == 'Ja':
+                    run = False;
+                elif inputt == 'Nej':
+                    run = False;
+            else:
+                board.search(row4,col4)
+                
+    print('Omg du vann du är bäst i hela världen')        
+    print (board.str())
     print()
 
     run = False
